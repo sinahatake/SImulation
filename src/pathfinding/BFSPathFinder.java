@@ -11,8 +11,8 @@ public class BFSPathFinder implements PathFinder {
     @Override
     public List<Position> findPath(Position start, Class<? extends Entity> targetType, WorldMap map) {
         Queue<Position> queue = new LinkedList<>();
-        Map<Position, Position> parentMap = new HashMap<>();
         Set<Position> visited = new HashSet<>();
+        Map<Position, Position> parent = new HashMap<>();
 
         queue.add(start);
         visited.add(start);
@@ -20,29 +20,24 @@ public class BFSPathFinder implements PathFinder {
         while (!queue.isEmpty()) {
             Position current = queue.poll();
 
-            Entity currentEntity = map.getEntity(current);
-            if (targetType.isInstance(currentEntity) && !current.equals(start)) {
-                return reconstructPath(start, current, parentMap);
+            if (!current.equals(start) && map.isEntityOfType(current, targetType)) {
+                return reconstructPath(start, current, parent);
             }
 
-            for (Position neighbor : getNeighbors(current, map)) {
+            for (Position next : getNeighbors(current, map)) {
 
-                if (visited.contains(neighbor)) {
+                if (visited.contains(next))
                     continue;
-                }
 
-                boolean isTarget = map.isEntityOfType(neighbor, targetType);
-                boolean isPassable = map.isSquareEmpty(neighbor) || isTarget;
+                boolean target = map.isEntityOfType(next, targetType);
+                boolean empty = map.isSquareEmpty(next);
 
-                if (isPassable) {
-                    visited.add(neighbor);
-                    parentMap.put(neighbor, current);
-                    queue.add(neighbor);
+                if (!empty && !target)
+                    continue;
 
-                    if (isTarget) {
-                        return reconstructPath(start, neighbor, parentMap);
-                    }
-                }
+                visited.add(next);
+                parent.put(next, current);
+                queue.add(next);
             }
         }
 
@@ -50,37 +45,36 @@ public class BFSPathFinder implements PathFinder {
     }
 
     private List<Position> getNeighbors(Position pos, WorldMap map) {
-        List<Position> neighbors = new ArrayList<>();
-        int x = pos.getX();
-        int y = pos.getY();
+        List<Position> list = new ArrayList<>();
+        int x = pos.x();
+        int y = pos.y();
 
-        Position[] potentialNeighbors = new Position[] {
+        Position[] arr = new Position[]{
                 new Position(x, y - 1),
                 new Position(x, y + 1),
                 new Position(x - 1, y),
                 new Position(x + 1, y)
         };
 
-        for (Position neighbor : potentialNeighbors) {
-            if (map.isInsideBounds(neighbor)) {
-                neighbors.add(neighbor);
-            }
+        for (Position p : arr) {
+            if (map.isInsideBounds(p))
+                list.add(p);
         }
-        return neighbors;
+
+        return list;
     }
 
-    private List<Position> reconstructPath(Position start, Position target, Map<Position, Position> parentMap) {
+    private List<Position> reconstructPath(Position start, Position goal, Map<Position, Position> parent) {
         LinkedList<Position> path = new LinkedList<>();
-        Position current = target;
+        Position cur = goal;
 
-        while (current != null && !current.equals(start)) {
-            path.addFirst(current);
-            current = parentMap.get(current);
+        while (!cur.equals(start)) {
+            path.addFirst(cur);
+            cur = parent.get(cur);
+            if (cur == null)
+                return Collections.emptyList();
         }
 
         return path;
     }
 }
-
-    
-

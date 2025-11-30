@@ -1,7 +1,10 @@
 package map;
 
 import entity.Entity;
+import entity.creature.Creature;
+
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,32 +67,38 @@ public class WorldMap {
     }
 
 
-    public Entity getEntity(Position pos) {
-        return occupancy.get(pos);
-    }
-
     public Position getPositionByEntity(Entity entity) {
         return locations.get(entity);
     }
 
     public Set<Entity> getAllEntities() {
-        return locations.keySet();
+        return new HashSet<>(occupancy.values());
+    }
+
+    public Set<Creature> getAllCreatures() {
+        Set<Creature> creatures = new HashSet<>();
+        for (Entity entity : occupancy.values()) {
+            if (entity instanceof Creature) {
+                creatures.add((Creature) entity);
+            }
+        }
+        return creatures;
     }
 
     public Map<Position, Entity> getOccupancy() {
         return new HashMap<>(occupancy);
     }
 
-    public int width() {
+    public int getWidth() {
         return width;
     }
 
-    public int height() {
+    public int getHeight() {
         return height;
     }
 
     public boolean isInsideBounds(Position pos) {
-        return pos.getX() >= 0 && pos.getX() < width && pos.getY() >= 0 && pos.getX() < height;
+        return pos.x() >= 0 && pos.x() < width && pos.y() >= 0 && pos.y() < height;
     }
 
 

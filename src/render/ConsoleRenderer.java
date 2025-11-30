@@ -9,12 +9,12 @@ import java.util.Map;
 public class ConsoleRenderer {
 
     public void printMap(WorldMap worldMap){
-        int height = worldMap.height();
-        int width = worldMap.width();
-        String[][] grid = new String[width][height];
+        int height = worldMap.getHeight();
+        int width = worldMap.getWidth();
+        String[][] grid = new String[height][width];
 
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
                 grid[i][j] = "⬜";
             }
         }
@@ -22,17 +22,14 @@ public class ConsoleRenderer {
         for (Map.Entry<Position, Entity> entry: worldMap.getOccupancy().entrySet()){
             Position pos = entry.getKey();
             Entity entity = entry.getValue();
-            grid[pos.getX()][pos.getY()] = entity.getSymbol();
+            grid[pos.y()][pos.x()] = entity.getSymbol();
         }
 
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                System.out.print(grid[i][j]);
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                System.out.print(" " + grid[i][j] + " ");
             }
             System.out.println();
         }
-
-
-
     }
 }

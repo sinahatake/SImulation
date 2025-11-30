@@ -6,55 +6,78 @@ import map.WorldMap;
 import pathfinding.BFSPathFinder;
 import pathfinding.PathFinder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public abstract class Creature extends Entity {
-    private int speed;
+    private final int speed;
     private int hp;
+    private int satiety = 10;
 
     private final PathFinder pathFinder = new BFSPathFinder();
-    private List<Position> currentPath = new LinkedList<>();
-    private Position cachedTarget = null;
 
     public void makeMove(WorldMap map, Class<? extends Entity> targetType) {
+        if (!applyHunger(map)) return;
+
         Position currentPos = map.getPositionByEntity(this);
+        if (currentPos == null) return;
 
-        boolean pathRecalculationNeeded = currentPath.isEmpty() ||
-                (cachedTarget != null && map.getEntity(cachedTarget) == null);
+        List<Position> path = pathFinder.findPath(currentPos, targetType, map);
 
-        if (pathRecalculationNeeded) {
-            List<Position> newPath = pathFinder.findPath(currentPos, targetType, map);
-
-            if (newPath.isEmpty()) {
-                currentPath = Collections.emptyList();
-                cachedTarget = null;
-                return;
-            }
-
-            currentPath = newPath;
-            cachedTarget = currentPath.getLast();
-        }
-
-        if (currentPath.size() == 1) {
-            map.removeEntity(cachedTarget);
-            currentPath.clear();
-            cachedTarget = null;
+        if (path.isEmpty()) {
+            makeRandomMove(map);
             return;
         }
 
-        int stepsToMove = Math.min(speed, currentPath.size() - 1);
+        if (path.size() == 1) {
+            map.removeEntity(path.getFirst());
+            map.moveEntity(this, path.getFirst());
+            satiety = 10;
+            return;
+        }
 
-        if (stepsToMove > 0) {
-            Position finalMove = currentPath.get(stepsToMove - 1);
+        int stepsToMove = Math.min(speed, path.size() - 1);
+        Position finalMove = path.get(stepsToMove - 1);
+        map.moveEntity(this, finalMove);
+    }
 
-            map.moveEntity(this, finalMove);
+    public boolean applyHunger(WorldMap map) {
+        satiety--;
 
-            for (int i = 0; i < stepsToMove; i++) {
-                currentPath.removeFirst();
+        if (satiety < 0) {
+            hp--;
+        }
+
+        if (hp <= 0) {
+            Position p = map.getPositionByEntity(this);
+            if (p != null) map.removeEntity(p);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void makeRandomMove(WorldMap map) {
+        Position pos = map.getPositionByEntity(this);
+        if (pos == null) return;
+
+        List<int[]> dirs = new ArrayList<>(Arrays.asList(
+                new int[]{1, 0},
+                new int[]{-1, 0},
+                new int[]{0, 1},
+                new int[]{0, -1}
+        ));
+
+        Collections.shuffle(dirs);
+
+        for (int[] d : dirs) {
+            Position np = new Position(pos.x() + d[0], pos.y() + d[1]);
+            if (map.isInsideBounds(np) && map.isSquareEmpty(np)) {
+                map.moveEntity(this, np);
+                return;
             }
-
         }
     }
 
@@ -62,23 +85,19 @@ public abstract class Creature extends Entity {
         return speed;
     }
 
-    public void setSpeed(int speed) {
-        this.speed = speed;
-    }
-
     public int getHp() {
         return hp;
     }
 
-    public void setHp(int hp) {
-        this.hp = hp;
+    public int getSatiety() {
+        return satiety;
     }
+
 
     public Creature(int hp, int speed) {
         this.hp = hp;
         this.speed = speed;
     }
-
 
 
 

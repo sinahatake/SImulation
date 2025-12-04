@@ -1,6 +1,5 @@
-package actions.turnActions;
+package actions;
 
-import actions.Action;
 import entity.Entity;
 import entity.Grass;
 import entity.creature.Creature;

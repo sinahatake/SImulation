@@ -115,4 +115,14 @@ public class WorldMap {
         }
         return targetType.isInstance(entity);
     }
+
+    public int numberOfEntityOfType(Class<? extends Entity> targetType) {
+        int count = 0;
+        for (Entity entity : occupancy.values()) {
+            if (targetType.isInstance(entity)) {
+                count++;
+            }
+        }
+        return count;
+    }
 }
